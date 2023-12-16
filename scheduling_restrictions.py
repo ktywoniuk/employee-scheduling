@@ -27,7 +27,7 @@ def set_sampler():
 def employee_preferences():
     '''Returns a dictionary of employees with their preferences'''
 
-    preferences = { "Anna": [1,2,3,4],
+    preferences = { "Anna": [1,2,3,100],
                     "Bill": [3,2,1,4],
                     "Chris": [4,2,3,1],
                     "Diane": [4,1,2,3],
@@ -53,7 +53,7 @@ def build_cqm():
     for employee, preference in preferences.items():
         # Create labels for binary variables
         labels = [f"x_{employee}_{shift}" for shift in range(num_shifts)]
-    
+
         # Add a discrete constraint over employee binaries
         cqm.add_discrete(labels, label=f"discrete_{employee}")
 
@@ -63,6 +63,15 @@ def build_cqm():
     # TODO: Restrict Anna from working shift 4
 
     # TODO: Set constraints to reflect the restrictions in the README.
+    for i in range(num_shifts):
+        # Bill and Frank cannot work during the same shift (product equal 0)
+        cqm.add_constraint_from_iterable([(f"x_Bill_{i}", f"x_Frank_{i}", 1)], "==", 0)
+        # Erica and Harriet prefer to work together (difference is 0)
+        cqm.add_constraint_from_iterable([(f"x_Erica_{i}",1), (f"x_Harriet_{i}",-1)], "==", 0)
+
+        # exactly two people scheduled for every shift
+        # sum of binary variables (for each shift) should add up to 2!
+        cqm.add_constraint_from_iterable([(f"x_{name}_{i}",1) for name in preferences], "==", 2)
 
     return cqm
 
